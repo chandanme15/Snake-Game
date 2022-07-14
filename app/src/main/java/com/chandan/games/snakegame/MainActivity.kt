@@ -4,15 +4,12 @@ import android.content.Context
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.os.CountDownTimer
-import android.os.Handler
-import android.os.Looper
 import android.util.DisplayMetrics
 import android.util.Log
 import android.view.View
-import androidx.constraintlayout.widget.ConstraintLayout
+import android.widget.GridView
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.recyclerview.widget.RecyclerView
 import java.util.*
 
 var NO_OF_ROWS = 0
@@ -22,8 +19,8 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
     private var NO_OF_NODES = 0
 
     private var nodeList = arrayListOf<Node>()
-    private lateinit var rvNodes : RecyclerView
-    private lateinit var adapter : Adapter
+    private lateinit var gvNodesView : GridView
+    private lateinit var gridViewAdapter : GridViewAdapter
     private val directionList = Direction.values()
     private val directionListSize = directionList.size
 
@@ -72,19 +69,24 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
         }
         val timer = Timer()
         timer.scheduleAtFixedRate(task, 5000, 1000)*/
-        object : CountDownTimer(1000000, 50) {
+        object : CountDownTimer(1000000, 100) {
             override fun onTick(millisUntilFinished: Long) {
-                Log.i("Snake", millisUntilFinished.toString())
+                //Log.i("Snake0", millisUntilFinished.toString())
                 synchronized(head) {
+                    //Log.i("Snake1", millisUntilFinished.toString())
                     val oldHeadPos = head.index
                     val newHeadPos = head.nextIndex()
+                    //Log.i("Snake2", millisUntilFinished.toString())
                     head.isON = false
                     nodeList[newHeadPos].isON = true
                     nodeList[newHeadPos].index = newHeadPos
                     nodeList[newHeadPos].direction = head.direction
                     head = nodeList[newHeadPos]
-                    adapter.notifyItemChanged(oldHeadPos)
-                    adapter.notifyItemChanged(newHeadPos)
+                    val oldItem = gridViewAdapter.getItem(oldHeadPos)
+                    oldItem?.viewHolder?.bind(oldItem)
+                    val newItem = gridViewAdapter.getItem(newHeadPos)
+                    newItem?.viewHolder?.bind(newItem)
+                    //Log.i("Snake3", millisUntilFinished.toString())
                 }
             }
 
@@ -95,16 +97,13 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
     }
 
     private fun setAdapter() {
-        rvNodes = findViewById(R.id.rv_nodes)
-        //rvNodes.setOnClickListener(this)
-        rvNodes.layoutManager = GridLayoutManager(this, NO_OF_COLUMNS,
-            LinearLayoutManager.VERTICAL, false)
-        //rvNodes.isScrollbarFadingEnabled = false
-        rvNodes.isHorizontalScrollBarEnabled = false
-        rvNodes.isVerticalScrollBarEnabled = false
-        adapter = Adapter(nodeList)
-        rvNodes.adapter = adapter
-        //adapter.notifyDataSetChanged()
+        gvNodesView = findViewById(R.id.gv_nodes)
+        gvNodesView.numColumns = NO_OF_COLUMNS
+        gvNodesView.isHorizontalScrollBarEnabled = false
+        gvNodesView.isVerticalScrollBarEnabled = false
+        gridViewAdapter = GridViewAdapter(this, nodeList)
+        gvNodesView.adapter = gridViewAdapter
+        //gridViewAdapter.notifyDataSetChanged()
     }
 
     private fun calculateNoOfColumns(
